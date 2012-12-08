@@ -54,7 +54,7 @@
         var tbody = document.createElement("tbody");
         var th = document.createElement("td");
         th.setAttribute("style", "font-size:15x;font-weight:bold; margin: 5px 0;");
-        th.textContent = "Dependencies";
+        th.textContent = "Dependencies: ";
         var tr = document.createElement("tr");
         tr.setAttribute("style", "font-size:13px;margin:3px;word-break:break-all;word-wrap: break-word;");
         var td = document.createElement("td");
@@ -65,7 +65,9 @@
             a.href = obj["url"];
             a.textContent = obj["name"];
             td.appendChild(a);
-            td.appendChild(document.createTextNode(", "));
+            if(i != len -1){
+                td.appendChild(document.createTextNode(", "));
+            }
         }
         tr.appendChild(td);
         tbody.appendChild(th);
