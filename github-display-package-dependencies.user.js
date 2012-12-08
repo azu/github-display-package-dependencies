@@ -139,7 +139,7 @@
                 return obj["url"];
             }
         }
-        return false;
+        return null;
     }
 
 })();
