@@ -4,7 +4,7 @@
 // @version        1.0
 // @namespace      http://efcl.info/
 // @author         azu
-// @description    
+// @description    Github: display package.json dependencies
 // @include        https://github.com/*/*
 // @run-at         document-end
 // ==/UserScript==
