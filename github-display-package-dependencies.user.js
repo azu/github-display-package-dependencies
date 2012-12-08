@@ -1,5 +1,5 @@
 // ==UserScript==
-// @id             Github-display-package.json
+// @id             Github-display-package-dependencies
 // @name           Github: display package.json dependencies
 // @version        1.0
 // @namespace      http://efcl.info/
@@ -74,6 +74,7 @@
         insertEle.appendChild(table);
     }
 
+    // MAIN
     main();
 
     // http://developer.github.com/v3/git/trees/
