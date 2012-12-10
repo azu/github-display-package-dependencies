@@ -5,6 +5,7 @@
 // @namespace      http://efcl.info/
 // @author         azu
 // @description    Github: display package.json dependencies
+// @updateURL      http://userscripts.org/scripts/source/153740.meta.js
 // @include        https://github.com/*/*
 // @run-at         document-end
 // ==/UserScript==
@@ -65,7 +66,7 @@
             a.href = obj["url"];
             a.textContent = obj["name"];
             td.appendChild(a);
-            if(i != len -1){
+            if (i != len - 1){
                 td.appendChild(document.createTextNode(", "));
             }
         }
@@ -137,7 +138,7 @@
         var tree = json["tree"];
         for (var i = 0, len = tree.length; i < len; i++){
             var obj = tree[i];
-            if (obj["type"] = "blob" && obj["path"] == "package.json"){
+            if (obj["type"] === "blob" && obj["path"] === "package.json"){
                 return obj["url"];
             }
         }
