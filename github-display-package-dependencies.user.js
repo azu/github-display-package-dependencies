@@ -41,10 +41,15 @@
                     console.log("doesn't get content", err);
                     return;
                 }
-                var list = createDependenciesList(JSON.parse(content));
-                if (list && list.length > 0) {
+                var packageJSON = JSON.parse(content);
+                var insertLists = [];
+                var dependenciesList = createDependenciesList(packageJSON);
+                var devDependenciesList = createDevDependenciesList(packageJSON);
+                dependenciesList && insertLists.push(dependenciesList);
+                devDependenciesList && insertLists.push(devDependenciesList);
+                if(insertLists.length > 0) {
                     insertGMCSS();
-                    insertDependencies(list);
+                    insertDependencies(insertLists)
                 }
             });
         });
@@ -68,33 +73,35 @@
             "}");
     }
 
-    var insertDependencies = function (list){
+    var insertDependencies = function (insertLists){
         // insert to element
         var insertEle = document.querySelector(".repo-desc-homepage");
         var table = document.createElement("table");
         table.setAttribute("style", "margin: 5px 0;");
         var tbody = document.createElement("tbody");
-        var th = document.createElement("td");
-        th.setAttribute("style", "font-size:15x;font-weight:bold; margin: 5px 0;");
-        th.textContent = "Dependencies: ";
-        var tr = document.createElement("tr");
-        tr.setAttribute("style", "font-size:13px;margin:3px;word-break:break-all;word-wrap: break-word;");
-        var td = document.createElement("td");
-        for (var i = 0, len = list.length; i < len; i++) {
-            var obj = list[i];
-            var aTag = document.createElement("a");
-            aTag.title = obj["name"];
-            aTag.href = obj["url"];
-            aTag.textContent = obj["name"];
-            aTag.setAttribute("data-npm-version", obj["version"]);
-            td.appendChild(aTag);
-            if (i != len - 1) {
-                td.appendChild(document.createTextNode(", "));
+        insertLists.forEach(function (dependenciesList, idx, object){
+            var th = document.createElement("td");
+            th.setAttribute("style", "font-size:15x;font-weight:bold; margin: 5px 0;");
+            th.textContent = dependenciesList["title"];
+            var tr = document.createElement("tr");
+            tr.setAttribute("style", "font-size:13px;margin:3px;word-break:break-all;word-wrap: break-word;");
+            var td = document.createElement("td");
+            for (var i = 0, len = dependenciesList.list.length; i < len; i++) {
+                var obj = dependenciesList.list[i];
+                var aTag = document.createElement("a");
+                aTag.title = obj["name"];
+                aTag.href = obj["url"];
+                aTag.textContent = obj["name"];
+                aTag.setAttribute("data-npm-version", obj["version"]);
+                td.appendChild(aTag);
+                if (i != len - 1) {
+                    td.appendChild(document.createTextNode(", "));
+                }
             }
-        }
-        tr.appendChild(td);
-        tbody.appendChild(th);
-        tbody.appendChild(tr);
+            tr.appendChild(td);
+            tbody.appendChild(th);
+            tbody.appendChild(tr);
+        });
         table.appendChild(tbody);
         insertEle.appendChild(table);
     };
@@ -152,7 +159,31 @@
                 "version": dependencies[packageName]
             });
         }
-        return list;
+        return {
+            "title": "Dependencies:",
+            "list": list
+        };
+    }
+
+    function createDevDependenciesList(packageJSON){
+        if (!("devDependencies" in packageJSON)) {
+            return null;
+        }
+        var list = [];
+        var dependencies = packageJSON["devDependencies"];
+        var keys = Object.keys(dependencies);
+        for (var i = 0, len = keys.length; i < len; i++) {
+            var packageName = keys[i];
+            list.push({
+                "name": packageName,
+                "url": "https://npmjs.org/package/" + packageName,
+                "version": dependencies[packageName]
+            });
+        }
+        return {
+            "title": "DevDependencies:",
+            "list": list
+        };
     }
 
     // "package.json"があるならURLを返す
