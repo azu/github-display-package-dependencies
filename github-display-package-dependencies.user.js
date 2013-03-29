@@ -1,7 +1,7 @@
 // ==UserScript==
 // @id             Github-display-package-dependencies
 // @name           Github: display package.json dependencies
-// @version        1.1
+// @version        1.2
 // @namespace      http://efcl.info/
 // @author         azu
 // @description    Github: display package.json dependencies
