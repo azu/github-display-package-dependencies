@@ -145,7 +145,7 @@
 
     // create dependencies
     function createDependenciesList(packageJSON){
-        if (!("dependencies" in packageJSON)) {
+        if (!("dependencies" in packageJSON) || isEmptyObject(packageJSON["dependencies"])) {
             return null;
         }
         var list = [];
@@ -165,8 +165,9 @@
         };
     }
 
+
     function createDevDependenciesList(packageJSON){
-        if (!("devDependencies" in packageJSON)) {
+        if (!("devDependencies" in packageJSON) || isEmptyObject(packageJSON["devDependencies"])) {
             return null;
         }
         var list = [];
@@ -184,6 +185,15 @@
             "title": "DevDependencies:",
             "list": list
         };
+    }
+
+    /**
+     * detect object is empty
+     * @param object
+     * @returns {boolean}
+     */
+    function isEmptyObject(object){
+        return Object.keys(object).length === 0;
     }
 
     // "package.json"があるならURLを返す
