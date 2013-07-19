@@ -15,8 +15,14 @@
     var userRepoPath = repositoryURL.replace("https://github.com/", "");
     var owner = userRepoPath.split("/").shift();
     var repoName = userRepoPath.split("/").pop();
-    var permalink = document.querySelector('link[rel="permalink"]').href;
-    var treeSHA = permalink.split("/").pop();
+    var permalink = document.querySelector('link[rel="permalink"]');
+    var treeSHA;
+    if(permalink == null){
+        // new Design
+        treeSHA = document.getElementById("js-command-bar-field").dataset.sha;
+    }else{
+        treeSHA = permalink.href.split("/").pop();
+    }
     if (!treeSHA && userRepoPath) {
         return null;
     }
@@ -73,9 +79,20 @@
             "}");
     }
 
+    function getElementForInsert(){
+        // 〜2013-06-18 Design
+        var elem;
+        elem = document.querySelector(".repo-desc-homepage");
+        if(elem == null){
+            // new Design
+            // https://github.com/blog/1529-repository-next
+            elem = document.querySelector(".repository-description");
+        }
+        return elem
+    }
     var insertDependencies = function (insertLists){
         // insert to element
-        var insertEle = document.querySelector(".repo-desc-homepage");
+        var insertEle = getElementForInsert();
         var table = document.createElement("table");
         table.setAttribute("style", "margin: 5px 0;");
         var tbody = document.createElement("tbody");
