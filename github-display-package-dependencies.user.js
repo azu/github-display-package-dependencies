@@ -1,38 +1,40 @@
 // ==UserScript==
 // @id             Github-display-package-dependencies
 // @name           Github: display package.json dependencies
-// @version        1.3
+// @version        1.5
 // @namespace      http://efcl.info/
 // @author         azu
 // @description    Github: display package.json dependencies
 // @include        https://github.com/*/*
 // @run-at         document-end
+// @grant GM_addStyle
+// @grant GM_xmlhttpRequest
 // ==/UserScript==
 
-(function (){
+(function () {
+    var insertEle = getElementForInsert();
+    if (insertEle == null) {
+        return;
+    }
+
     var repositoryURL = document.querySelector('meta[property="og:url"]').getAttribute("content");
     /* USER/repositoryNAME */
     var userRepoPath = repositoryURL.replace("https://github.com/", "");
     var owner = userRepoPath.split("/").shift();
     var repoName = userRepoPath.split("/").pop();
     var permalink = document.querySelector('link[rel="permalink"]');
-    var treeSHA;
-    if(permalink == null){
-        // new Design
-        treeSHA = document.getElementById("js-command-bar-field").dataset.sha;
-    }else{
-        treeSHA = permalink.href.split("/").pop();
-    }
+    var treeSHA = document.querySelector('a[itemscope="url"]').dataset.branch;
     if (!treeSHA && userRepoPath) {
         return null;
     }
 
-    var main = function (){
-        getTree({
+    var main = function () {
+        var repoData = {
             "owner": owner,
             "name": repoName,
             "sha": treeSHA
-        }, function (err, result){
+        };
+        getTree(repoData, function (err, result) {
             if (err) {
                 console.log("not found tree", err);
                 return;
@@ -42,7 +44,7 @@
                 console.log("not found package.json");
                 return;
             }
-            getFileRawContent(url, function (err, content){
+            getFileRawContent(url, function (err, content) {
                 if (err) {
                     console.log("doesn't get content", err);
                     return;
@@ -51,9 +53,11 @@
                 var insertLists = [];
                 var dependenciesList = createDependenciesList(packageJSON);
                 var devDependenciesList = createDevDependenciesList(packageJSON);
+                var bundledDependenciesList = createBundledDependenciesList(packageJSON);
                 dependenciesList && insertLists.push(dependenciesList);
                 devDependenciesList && insertLists.push(devDependenciesList);
-                if(insertLists.length > 0) {
+                bundledDependenciesList && insertLists.push(bundledDependenciesList);
+                if (insertLists.length > 0) {
                     insertGMCSS();
                     insertDependencies(insertLists)
                 }
@@ -61,7 +65,7 @@
         });
     };
 
-    function insertGMCSS(){
+    function insertGMCSS() {
         GM_addStyle("a[data-npm-version] {" +
             "    border-bottom: 1px dotted #333;" +
             "    position: relative;" +
@@ -79,24 +83,23 @@
             "}");
     }
 
-    function getElementForInsert(){
+    function getElementForInsert() {
         // 〜2013-06-18 Design
         var elem;
-        elem = document.querySelector(".repo-desc-homepage");
-        if(elem == null){
-            // new Design
-            // https://github.com/blog/1529-repository-next
-            elem = document.querySelector(".repository-description");
-        }
+        elem = document.querySelector(".repository-description");
         return elem
     }
-    var insertDependencies = function (insertLists){
+
+    var insertDependencies = function (insertLists) {
         // insert to element
         var insertEle = getElementForInsert();
+        if (insertEle == null) {
+            return;
+        }
         var table = document.createElement("table");
         table.setAttribute("style", "margin: 5px 0;");
         var tbody = document.createElement("tbody");
-        insertLists.forEach(function (dependenciesList, idx, object){
+        insertLists.forEach(function (dependenciesList, idx, object) {
             var th = document.createElement("td");
             th.setAttribute("style", "font-size:15x;font-weight:bold; margin: 5px 0;");
             th.textContent = dependenciesList["title"];
@@ -128,7 +131,7 @@
 
     // http://developer.github.com/v3/git/trees/
     // GET /repos/:owner/:repo/git/trees/:sha
-    function getTree(repo, callback){
+    function getTree(repo, callback) {
         var owner = repo.owner,
             repoName = repo.name,
             sha = repo.sha;
@@ -136,32 +139,32 @@
         GM_xmlhttpRequest({
             method: "GET",
             url: treeAPI,
-            onload: function (res){
+            onload: function (res) {
                 callback(null, res.responseText);
             },
-            onerror: function (res){
+            onerror: function (res) {
                 callback(res);
             }
         });
     }
 
-    function getFileRawContent(url, callback){
+    function getFileRawContent(url, callback) {
         // http://swanson.github.com/blog/2011/07/09/digging-around-the-github-v3-api.html
         GM_xmlhttpRequest({
             method: "GET",
             url: url,
             headers: {"Accept": "application/vnd.github-blob.raw"},
-            onload: function (res){
+            onload: function (res) {
                 callback(null, res.responseText);
             },
-            onerror: function (res){
+            onerror: function (res) {
                 callback(res);
             }
         });
     }
 
     // create dependencies
-    function createDependenciesList(packageJSON){
+    function createDependenciesList(packageJSON) {
         if (!("dependencies" in packageJSON) || isEmptyObject(packageJSON["dependencies"])) {
             return null;
         }
@@ -183,7 +186,7 @@
     }
 
 
-    function createDevDependenciesList(packageJSON){
+    function createDevDependenciesList(packageJSON) {
         if (!("devDependencies" in packageJSON) || isEmptyObject(packageJSON["devDependencies"])) {
             return null;
         }
@@ -204,17 +207,41 @@
         };
     }
 
+    function createBundledDependenciesList(packageJSON) {
+        if ((("bundledDependencies" in packageJSON) && isEmptyObject(packageJSON["bundledDependencies"])) ||
+            (("bundleDependencies" in packageJSON) && isEmptyObject(packageJSON["bundleDependencies"]))) {
+            return null;
+        }
+        var list = [];
+        var dependencies = packageJSON["bundleDependencies"] || packageJSON["bundledDependencies"];
+        if (!dependencies) {
+            return null;
+        }
+        for (var i = 0, len = dependencies.length; i < len; i++) {
+            var packageName = dependencies[i];
+            list.push({
+                "name": packageName,
+                "url": "https://npmjs.org/package/" + packageName,
+                "version": "*"
+            });
+        }
+        return {
+            "title": "bundledDependencies:",
+            "list": list
+        };
+    }
+
     /**
      * detect object is empty
      * @param object
      * @returns {boolean}
      */
-    function isEmptyObject(object){
+    function isEmptyObject(object) {
         return Object.keys(object).length === 0;
     }
 
     // "package.json"があるならURLを返す
-    function getPackageJSON(json){
+    function getPackageJSON(json) {
         var tree = json["tree"];
         for (var i = 0, len = tree.length; i < len; i++) {
             var obj = tree[i];
