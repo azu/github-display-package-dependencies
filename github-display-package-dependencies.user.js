@@ -23,7 +23,7 @@
     var owner = userRepoPath.split("/").shift();
     var repoName = userRepoPath.split("/").pop();
     var permalink = document.querySelector('link[rel="permalink"]');
-    var treeSHA = document.querySelector('a[itemscope="url"]').dataset.branch;
+    var treeSHA = document.querySelector(".commit-tease-sha").getAttribute("href").split("/").pop();
     if (!treeSHA && userRepoPath) {
         return null;
     }
