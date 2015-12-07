@@ -86,7 +86,7 @@
     function getElementForInsert() {
         // 〜2013-06-18 Design
         var elem;
-        elem = document.querySelector(".repository-description");
+        elem = document.querySelector(".repository-meta");
         return elem
     }
 
